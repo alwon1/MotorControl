@@ -13,7 +13,7 @@ void setup()
 motor m = motor(&PORTB);
 void loop()
 {
-  if ((uint8_t)Serial.available() >= (uint8_t)(sizeof(uint8_t) + sizeof(uint16_t)))
+  if (Serial.available())
   {
     byte t[sizeof(uint8_t) + sizeof(uint16_t)];
     Serial.readBytes(t, 1);
