@@ -20,6 +20,7 @@ typedef enum
     Step,
     StepSpeed,
     GetPosition,
+    SetPosition,
     PowerOff
 } CMDS;
 
@@ -29,7 +30,7 @@ private:
     //bool Reverse;
     volatile int steps;
     unsigned int delay;
-    volatile char *port;
+    volatile uint8_t *port;
     char position;
     //volatile unsigned long nextTime;
     volatile unsigned long lastTime;
@@ -37,7 +38,7 @@ private:
 public:
     motor(volatile uint8_t *Wport)
     {
-        port = (char *)Wport;
+        port = Wport;
         delay = 2500;
         lastTime = micros() + delay;
         // Reverse = 0;
@@ -61,19 +62,23 @@ public:
             switch (position & 3)
             {
             case 0:
-                PORTB = B1001;
+                *port = B1001;
                 break;
             case 1:
-                PORTB = B1100;
+                *port = B1100;
                 break;
             case 2:
-                PORTB = B0110;
+                *port = B0110;
                 break;
             case 3:
-                PORTB = B0011;
+                *port = B0011;
             default:
                 break;
             }
+        }
+        else
+        {
+            *port = 0;
         }
     }
     char CMD(uint8_t cmd, uint16_t val)
@@ -88,6 +93,9 @@ public:
             break;
         case PowerOff:
             PORTB = 0;
+            break;
+        case SetPosition:
+            steps = val - position;
             break;
         case GetPosition:
             return position;
