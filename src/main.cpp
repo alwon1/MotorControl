@@ -19,7 +19,7 @@ void loop()
     Serial.readBytes(t, 1);
     // for (size_t i = 0; i < 3; i++)
     // {
-      Serial.println(t[0]);
+    Serial.println(t[0]);
     // }
 
     // m.CMD(t[0], (uint16_t) * (t + 1));
@@ -34,6 +34,18 @@ void loop()
     default:
       break;
     }
+  }
+  m.update();
+}
+void BinarySer()
+{
+  if ((uint8_t)Serial.available() >= (uint8_t)(sizeof(uint8_t) + sizeof(uint16_t)))
+  {
+    byte t[3];
+    Serial.readBytes(t, 3);
+    uint16_t val = t[1];
+    val = val << 8 + t[2];
+    m.CMD(t[0], t[1] << 8);
   }
   m.update();
 }
