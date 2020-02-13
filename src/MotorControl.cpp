@@ -17,10 +17,12 @@
 
 typedef enum
 {
-    Step,
+    Step = 1,
     StepSpeed,
     GetPosition,
     SetPosition,
+    GetDegPosition,
+    SetDegPostition,
     PowerOff
 } CMDS;
 
@@ -28,6 +30,9 @@ class motor
 {
 private:
     //bool Reverse;
+    uint8_t StepDegree_Num;
+    uint8_t StepDegree_Den;
+    uint16_t DegPos;
     volatile int steps;
     unsigned int delay;
     volatile uint8_t *port;
@@ -41,7 +46,16 @@ public:
         port = Wport;
         delay = 2500;
         lastTime = micros() + delay;
+        position = 0;
+        steps = 0;
+        return;
         // Reverse = 0;
+    }
+    motor(volatile uint8_t *Wport, uint8_t stepDegree_Num, uint8_t stepDegree_Den) : motor(Wport)
+    {
+        StepDegree_Den = stepDegree_Den;
+        StepDegree_Num = stepDegree_Num;
+        DegPos = 0;
     }
     void update()
     {
@@ -59,6 +73,8 @@ public:
         {
             position += steps < 0 ? -1 : 1;
             steps += steps < 0 ? 1 : -1;
+            DegPos += (steps < 0 ? -1 : 1) * StepDegree_Num;
+            DegPos += DegPos > 360 * StepDegree_Den ? DegPos - (360 * StepDegree_Den) : DegPos;
             switch (position & 3)
             {
             case 0:
@@ -81,7 +97,7 @@ public:
             *port = 0;
         }
     }
-    char CMD(uint8_t cmd, uint16_t val)
+    int CMD(uint8_t cmd, int16_t val)
     {
         switch (cmd)
         {
@@ -92,13 +108,21 @@ public:
             delay = val;
             break;
         case PowerOff:
-            PORTB = 0;
+            *port = 0;
             break;
         case SetPosition:
             steps = val - position;
             break;
         case GetPosition:
             return position;
+        case GetDegPosition:
+            //note that this must be divided by the denominator for actual postition
+            //neevermind well just drop the decimal
+            return DegPos / 2;
+            break;
+        case SetDegPostition:
+            steps = (DegPos - (val * 2)) / 7;
+            break;
         default:
             break;
         }
