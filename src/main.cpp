@@ -10,7 +10,7 @@ void setup()
   pinMode(8, OUTPUT);
   pinMode(9, OUTPUT);
 }
-motor m = motor((volatile uint8_t *)&PORTB);
+motor m = motor(&PORTB);
 void loop()
 {
   if ((uint8_t)Serial.available() >= (uint8_t)(sizeof(uint8_t) + sizeof(uint16_t)))
