@@ -36,7 +36,8 @@ private:
     volatile int steps;
     unsigned int delay;
     volatile uint8_t *port;
-    char position;
+    uint8_t position;
+    uint16_t posmax;
     //volatile unsigned long nextTime;
     volatile unsigned long lastTime;
 
@@ -44,7 +45,7 @@ public:
     motor(volatile uint8_t *Wport)
     {
         port = Wport;
-        delay = 2500;
+        delay = 1950;
         lastTime = micros() + delay;
         position = 0;
         steps = 0;
@@ -56,6 +57,7 @@ public:
         StepDegree_Den = stepDegree_Den;
         StepDegree_Num = stepDegree_Num;
         DegPos = 0;
+        posmax = ((uint16_t)(360 * StepDegree_Den)) / StepDegree_Num;
     }
     void update()
     {
@@ -72,22 +74,24 @@ public:
         if (steps)
         {
             position += steps < 0 ? -1 : 1;
+            position = position > posmax ? position - posmax : position;
+            //position = min(position, position % (360 * StepDegree_Num) / StepDegree_Den);
             steps += steps < 0 ? 1 : -1;
-            DegPos += (steps < 0 ? -1 : 1) * StepDegree_Num;
-            DegPos += DegPos > 360 * StepDegree_Den ? DegPos - (360 * StepDegree_Den) : DegPos;
+            //DegPos += (steps < 0 ? -1 : 1) * (int16_t)StepDegree_Num;
+            // += DegPos > 360 * StepDegree_Den ? DegPos - (360 * StepDegree_Den) : DegPos;
             switch (position & 3)
             {
             case 0:
-                *port = B1001;
+                PORTB = B1001;
                 break;
             case 1:
-                *port = B1100;
+                PORTB = B1100;
                 break;
             case 2:
-                *port = B0110;
+                PORTB = B0110;
                 break;
             case 3:
-                *port = B0011;
+                PORTB = B0011;
             default:
                 break;
             }
@@ -118,7 +122,7 @@ public:
         case GetDegPosition:
             //note that this must be divided by the denominator for actual postition
             //neevermind well just drop the decimal
-            return DegPos / 2;
+            return position * StepDegree_Num / StepDegree_Den;
             break;
         case SetDegPostition:
             steps = (DegPos - (val * 2)) / 7;
